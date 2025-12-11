@@ -1,0 +1,58 @@
+# and then will deploy to a EC2 instance
+
+name: Deploy to Amazon EC2
+
+# on:
+#   push:
+#     branches: ["main"]
+
+on:
+  workflow_dispatch: # for manual launch
+    # optional inputs here    
+
+env:
+  AWS_REGION: "eu-north-1"
+
+jobs:
+  UT:
+    name: Unit tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run tests
+        run: |
+          cd app
+          export PYTHONPATH=$PYTHONPATH:$(pwd)
+          python -m unittest discover -s tests -p 'test_*.py'
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    # environment: production
+
+    steps:
+      - run: echo "Deploy"
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: SSH into EC2 instance, copy files and deploy
+        id: EC2-actions-docker-compose
+        env:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_SSH_PORT }}
+        run: |
+          echo "$key" > ssh_key.pem
+          chmod 500 ssh_key.pem
+          ssh -i ssh_key.pem -p $port -o StrictHostKeyChecking=no $username@$host 'sudo chmod 777 -R ts'
+          scp -r -i ssh_key.pem -P $port -o StrictHostKeyChecking=no ./* $username@$host:/home/ec2-user/ts
+          ssh -i ssh_key.pem -p $port -o StrictHostKeyChecking=yes $username@$host 'cd ts && docker-compose up -d'

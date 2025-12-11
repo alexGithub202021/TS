@@ -1,0 +1,25 @@
+networks:
+  python_ts:
+
+services:
+  python:
+    container_name: python1
+    build:
+      context: "./app/"
+    ports:
+      - "${PYTHON_PORT}:5002"
+    volumes:
+      - ./app:/app
+    networks:
+      - python_ts
+
+  redis:
+    # image: arm64v8/redis
+    image: redis
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - ./redis:/var/lib/redis
+    restart: always
+    networks:
+      - python_ts

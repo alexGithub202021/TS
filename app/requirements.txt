@@ -1,0 +1,14 @@
+# Flask==0.12.5
+Flask
+Flask-SQLAlchemy
+mysql-connector-python
+mysqlclient
+pymysql
+sqlalchemy
+setuptools
+sqlacodegen
+requests
+redis
+# csv
+binance
+python-binance
